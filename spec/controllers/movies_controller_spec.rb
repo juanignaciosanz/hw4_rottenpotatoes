@@ -26,4 +26,22 @@ describe MoviesController do
     end
   end
 
+  describe 'sad path: finding similar movies by director is never possible' do
+
+    before :each do
+      @m = mock(Movie, :title => "Star Wars", :director => nil, :id => "1")
+      Movie.stub!(:find).with("1").and_return(@m)
+    end
+    
+    it 'should generate routing for Similar Movies' do
+      { :get => movie_similar_path(1) }.
+      should route_to(:controller => "movies", :action => "similar", :movie_id => "1")
+    end
+    it 'should select the Index template for rendering and generate a flash' do
+      get :similar, :movie_id => "1"
+      response.should redirect_to(movies_path)
+      flash[:notice].should_not be_blank
+    end
+  end
+
 end
