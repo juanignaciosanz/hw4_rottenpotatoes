@@ -10,12 +10,12 @@ group :development, :test do
   gem 'sqlite3'
   #gem 'ruby-debug19', :require => 'ruby-debug'
   gem 'launchy'
+  gem 'rspec-rails'
 end
 
 group :test do
   gem 'cucumber-rails', :require => false
-  gem 'rspec-rails'
-  gem 'simplecov'
+  gem 'simplecov', :require => false 
   gem 'debugger'
   gem 'database_cleaner'
   gem 'cucumber-rails-training-wheels'

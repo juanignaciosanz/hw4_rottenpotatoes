@@ -44,4 +44,47 @@ describe MoviesController do
     end
   end
 
+
+  describe 'Movie CRUD operations' do
+
+    before :each do
+      @m = mock(Movie, :title => "Star Wars", :director => nil, :id => "1")
+    end
+    
+    describe 'create and destroy' do
+      it 'should create a new movie' do
+        MoviesController.stub(:create).and_return(mock('Movie'))
+        post :create, {:id => "1"}
+      end
+      it 'should destroy a movie' do
+        Movie.stub!(:find).with("1").and_return(@m)
+        @m.should_receive(:destroy)
+        delete :destroy, {:id => "1"}
+      end
+    end
+
+    describe 'update' do
+      it 'should pass movie object the new attribute value to updated and redirect' do
+        fake_new_director = 'Steven Spielberg'
+        Movie.stub!(:find).with("1").and_return(@m)
+        @m.should_receive(:update_attributes!).with("director" => fake_new_director).and_return(true)
+        put :update, :id => "1", :movie => {:director => fake_new_director}
+        response.should redirect_to(movie_path(@m))
+      end
+    end
+
+    describe 'read for showing and editing' do
+      it 'should pass movie id and render movie' do
+        Movie.stub!(:find).with("1").and_return(@m)
+        get :show, :id => "1"
+        response.should render_template('show')
+      end
+      it 'should pass movie id and render movie in editing template' do
+        Movie.stub!(:find).with("1").and_return(@m)
+        get :edit, :id => "1"
+        response.should render_template('edit')
+      end
+    end
+  end
+
 end
