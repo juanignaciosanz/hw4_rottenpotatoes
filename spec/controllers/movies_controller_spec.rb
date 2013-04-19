@@ -87,4 +87,84 @@ describe MoviesController do
     end
   end
 
+  describe '#find_similar_movies' do
+
+    before :each do
+      @m = mock(Movie, :title => "Star Wars", :director => "George Lucas", :id => "1")
+      Movie.stub!(:find).with("1").and_return(@m)
+      @mn = mock(Movie, :title => "Star Wars", :director => nil, :id => "2")
+      Movie.stub!(:find).with("2").and_return(@mn)
+    end
+
+    context 'when movie has no director info' do
+      it 'should redirect to index template' do
+        Movie.stub!(:similar_director).with(nil).and_return([])
+        fake_movie = mock('Movie', :title => 'Fake Movie')
+        Movie.stub!(:find_by_id).with("2").and_return(fake_movie)
+        post :similar, {:movie_id => "2"}
+        response.should redirect_to(movies_path)
+      end
+    end
+    context 'when movie has director info' do
+      before :each do
+        @fake_movies = [mock('Movie'), mock('Movie')]
+        Movie.stub!(:similar_director).with("George Lucas").and_return(@fake_movies)
+      end
+      it 'should render similar movies template' do
+        post :similar, {:movie_id => "1"}
+        response.should render_template('similar')
+      end
+      it 'should make the result of Movie.find_similar_movies available to that template' do
+        post :similar, {:movie_id => "1"}
+        assigns(:movies).should == @fake_movies
+      end
+    end
+  end
+
+
+  describe 'listing movies, sorting and filtering' do
+    before :each do
+      @fake_movies = [mock('Movie'), mock('Movie')]
+    end
+    it 'should make movies avaliable to template' do
+      Movie.stub!(:find_all_by_rating).and_return(@fake_movies)
+      get :index
+      assigns(:movies).should == @fake_movies
+      response.should render_template('index')
+    end
+    context 'should deal with sorting and ratings any' do
+      before :each do
+        @selected_ratings={:P => 'P'}
+        session[:ratings]=@selected_ratings
+        session[:sort]='any_different'
+      end
+      it 'should deal with sort title and ratings any' do
+        get :index, {:sort => 'title', :ratings => @selected_ratings}
+        assigns(:title_header).should == 'hilite'
+        response.should redirect_to :sort => 'title', :ratings => @selected_ratings
+      end
+      it 'should deal with sort release_date and ratings any' do
+        get :index, {:sort => 'release_date', :ratings => @selected_ratings}
+        assigns(:date_header).should == 'hilite'
+        response.should redirect_to :sort => 'release_date', :ratings => @selected_ratings
+      end
+    end
+    context 'should deal with ratings and sorting any' do
+      before :each do
+        @selected_ratings={:P => 'P'}
+        session[:ratings]=@selected_ratings
+      end
+      it 'should deal with ratings any and sort nil' do
+        get :index, {:ratings => {:G=>'G'}}
+        response.should redirect_to :ratings => {:G=>'G'}
+      end
+      it 'should deal with ratings any and sort any' do
+        session[:sort]='any_valid'
+        get :index, {:sort => 'title', :ratings => {:G=>'G'}}
+        session[:ratings]={:G=>'G'}
+        response.should redirect_to :sort => 'title', :ratings => {:G=>'G'}
+      end
+    end
+  end
+
 end
